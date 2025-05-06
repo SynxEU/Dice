@@ -1,0 +1,57 @@
+@page "/Dice"
+@using BlazorApp1.Components.Model
+@using BlazorApp1.Components.Component
+@rendermode InteractiveServer
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+    <DiceComponent UpdateUi="UpdateToUi" />
+</RadzenStack>
+
+<DiceHistoryComponent Data="Data" />
+
+@code {
+    public List<DiceModel> Data = new();
+    private string filepath = Path.Combine(Environment.CurrentDirectory, "Throws.csv");
+
+    protected override void OnInitialized()
+    {
+        LoadInitialThrows();
+    }
+
+    private void LoadInitialThrows()
+    {
+        if (File.Exists(filepath))
+        {
+            var lines = File.ReadAllLines(filepath)
+                            .Skip(1)
+                            .Where(line => !string.IsNullOrWhiteSpace(line))
+                            .Select(line =>
+                            {
+                                var parts = line.Split(',');
+                                return new DiceModel
+                                {
+                                    Id = int.Parse(parts[0]),
+                                    Value = int.Parse(parts[1]),
+                                    Date = DateOnly.Parse(parts[2]),
+                                    Time = TimeSpan.Parse(parts[3])
+                                };
+                            })
+                            .OrderByDescending(dm => dm.Id)
+                            .Take(10)
+                            .ToList();
+
+            if (lines.Any())
+            {
+                Data = lines;
+            }
+        }
+    }
+
+    private void UpdateToUi(DiceModel value)
+    {
+        Data.Add(value);
+        Data = Data.OrderByDescending(dm => dm.Id)
+                   .Take(10)
+                   .ToList();
+        StateHasChanged();
+    }
+}

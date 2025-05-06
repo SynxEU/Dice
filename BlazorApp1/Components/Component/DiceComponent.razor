@@ -1,0 +1,69 @@
+@using BlazorApp1.Components.Model
+<RadzenStack Orientation="Orientation.Vertical" gap="1rem" JustifyContent="JustifyContent.Center">
+    <RadzenButton Style="width: 7rem" ButtonStyle="ButtonStyle.Success" Icon="poker_chip" Size="ButtonSize.Medium" Click="@ThrowDice"/>
+    @if (lastValue == 0)
+    {
+        <strong>Throw a dice</strong>
+    }
+    else
+    {
+        <strong>Eyes: @lastValue 🎲</strong>
+    }
+</RadzenStack>
+
+@code {
+    private string filepath = Path.Combine(Environment.CurrentDirectory, "Throws.csv");
+    private static int currentId = 1;
+    private int lastValue;
+
+    [Parameter] public EventCallback<DiceModel> UpdateUi { get; set; }
+
+    async Task ThrowDice()
+    {
+        if (!File.Exists(filepath))
+        {
+            using (StreamWriter writer = new StreamWriter(File.Create(filepath)))
+            {
+                writer.WriteLine("Id,Value,Date,Time");
+            }
+        }
+
+        Random random = new Random();
+        int value = random.Next(1, 7);
+        lastValue = value;
+        StateHasChanged();
+
+        DiceModel model = new DiceModel
+        {
+            Id = GetNextId(),
+            Value = value,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow),
+            Time = DateTime.UtcNow.TimeOfDay
+        };
+
+        using (StreamWriter writer = new StreamWriter(filepath, append: true))
+        {
+            writer.WriteLine($"{model.Id},{model.Value},{model.Date},{model.Time}");
+        }
+
+        await UpdateUi.InvokeAsync(model);
+    }
+
+
+    private int GetNextId()
+    {
+        if (!File.Exists(filepath)) return 1;
+
+        var lines = File.ReadAllLines(filepath);
+        if (lines.Length <= 1) return 1;
+
+        string lastLine = lines.Last();
+        if (int.TryParse(lastLine.Split(',')[0], out int lastId))
+        {
+            return lastId + 1;
+        }
+
+        return 1;
+    }
+
+}

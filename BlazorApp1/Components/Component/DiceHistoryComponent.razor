@@ -1,0 +1,29 @@
+@using BlazorApp1.Components.Model
+<div style="position: absolute; top: 1rem; right: 1rem; background: #f8f9fa; padding: 1rem; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); width: 250px;">
+    <h5>Latest Throws</h5>
+
+    @if (Data != null && Data.Any())
+    {
+        <ul style="list-style: none; padding-left: 0;">
+            @foreach (var item in Data)
+            {
+                <li>
+                    <strong>@item.Value</strong> 🎲 — @item.Date.ToShortDateString() @item.Time.ToString(@"hh\:mm\:ss")
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No throws</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<DiceModel> Data { get; set; }
+}
+
+@code {
+    
+}
